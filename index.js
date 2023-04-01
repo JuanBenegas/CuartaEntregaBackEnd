@@ -1,142 +1,127 @@
-const fs = require("fs").promises
+import fs from 'fs'
 import express from 'express';
 
 const app = express()
 
-const product1 = [
-    {
-        title: 'producto prueba',
-        description:'Este es un producto prueba',
-        price:200,
-        thumbnail:'Sin imagen',
-        code:'abc123',
-        stock:25
-    },
-    {
-        title: 'producto prueba 2',
-        description:'Este es un producto prueba',
-        price:200,
-        thumbnail:'Sin imagen',
-        code:'abc123',
-        stock:25
-    },
-    {
-        title: 'producto prueba 3',
-        description:'Este es un producto prueba',
-        price:200,
-        thumbnail:'Sin imagen',
-        code:'abc123',
-        stock:25
-    },
-    {
-        title: 'producto prueba 4',
-        description:'Este es un producto prueba',
-        price:200,
-        thumbnail:'Sin imagen',
-        code:'abc123',
-        stock:25
-    },
-    {
-        title: 'producto prueba 5',
-        description:'Este es un producto prueba',
-        price:200,
-        thumbnail:'Sin imagen',
-        code:'abc123',
-        stock:25
-    }
-]
+const product1 = []
 
 class ProductManager {
     idAuto = 1
     #products = []
-    path = ``
 
-    constructor(){
-        this.#products = [
-            {
-                title: 'producto prueba',
-                description:'Este es un producto prueba',
-                price:200,
-                thumbnail:'Sin imagen',
-                code:'abc123',
-                stock:25
-            },
-            {
-                title: 'producto prueba 2',
-                description:'Este es un producto prueba',
-                price:200,
-                thumbnail:'Sin imagen',
-                code:'abc123',
-                stock:25
-            },
-            {
-                title: 'producto prueba 3',
-                description:'Este es un producto prueba',
-                price:200,
-                thumbnail:'Sin imagen',
-                code:'abc123',
-                stock:25
-            },
-            {
-                title: 'producto prueba 4',
-                description:'Este es un producto prueba',
-                price:200,
-                thumbnail:'Sin imagen',
-                code:'abc123',
-                stock:25
-            },
-            {
-                title: 'producto prueba 5',
-                description:'Este es un producto prueba',
-                price:200,
-                thumbnail:'Sin imagen',
-                code:'abc123',
-                stock:25
+    constructor() {
+        this.path = './products.json'
+    }
+
+    async getProduct(limit) {
+        if(!limit){
+            try {
+                let products = []
+                if (fs.existsSync(this.path)) {
+                    const fileData = await fs.promises.readFile(this.path, 'utf-8')
+                    products = JSON.parse(fileData)
+                }
+                return products
+            } catch (e) {
+                console.log('Error en getProducts:', e)
+                throw e
             }
-        ]
-        this.path = `./products.json`
+        }
+
+        if(limit > 0){
+            
+            try {
+                let products = []
+                let productsLimit = []
+                
+                if (fs.existsSync(this.path)) {
+                    const fileData = await fs.promises.readFile(this.path, 'utf-8')
+                    products = JSON.parse(fileData)
+                    for (let i = 0; i < limit; i++){
+                        productsLimit.push(products[i])
+                        console.log(i)
+                    }
+                }
+                return productsLimit
+            }
+            catch{
+                throw new Error("ERROR EN LIMITPRODUCS")
+            }
+        }
     }
 
-    async getProduct() {
-        return this.product
+    async limitProducts(limit) {
+        try {
+            let products = []
+            let productsLimit = []
+            if (fs.existsSync(this.path)) {
+                const fileData = await fs.promises.readFile(this.path, 'utf-8')
+                products = JSON.parse(fileData)
+
+                for (let i = 0; i === limit; i++){
+                    productsLimit.push(products[i])
+                    console.log(i)
+                }
+            }
+            return productsLimit
+        }
+        catch{
+            throw new Error("ERROR EN LIMITPRODUCS")
+        }
     }
 
-    async addProducts(prod){
-        try{
+    async addProducts(prod) {
+        try {
             const productFile = await fs.readFile(this.path, "utf-8")
             let newProduct = JSON.parse(productFile)
-            
+
             const valid = newProduct.find((p) => p.id === prod.id || p.code === prod.code)
 
-            if(valid){
+            if (valid) {
                 throw new Error('ID O CODE REPETIDO, NO SE PUEDE CREAR EL OBJETO')
             }
 
-            if (newProduct.length > 0){
+            if (newProduct.length > 0) {
                 const lastProduct = newProduct[newProduct.length - 1]
                 this.idAuto = lastProduct.id + 1
             }
 
-            newProduct.push({id:this.idAuto++, ...prod})
+            newProduct.push({ id: this.idAuto++, ...prod })
 
             await fs.writeFile(this.path, JSON.stringify(newProduct, null, 2))
             return 'OBJETO CREADO CORRECTAMENTE'
         }
-        catch(e){
+        catch (e) {
             throw new Error(e)
         }
     }
 
-    async getProductById(id){
-        const productFile = await fs.readFile(this.path, "utf-8")
-        let idProd = JSON.parse(productFile)
-
-        const buscarProd = idProd.find(p => p.id === id)
-
-        if(!buscarProd){
-            throw new Error("NO SE ENCONTRO EL PRODUCTO EN LA LISTA")
+    async getProductById(id) {
+        try {
+            // let productoEncontrado = {}
+            const fileData = await fs.promises.readFile(this.path, 'utf-8')
+            let productosJson = JSON.parse(fileData)
+            let productoEncontrado = productosJson.find(p => p.id === id)
+            if (productoEncontrado) {
+                console.log(productoEncontrado)
+                return productoEncontrado
+            }
+            else {
+                return { error: "No existe tal producto" }
+            }
         }
-        return buscarProd
+        catch {
+            throw new Error("ERROR EN PRODUCTBYID")
+        }
+        // const productFile = await fs.promises.readFile(this.path, "utf-8")
+        // let idProd = JSON.parse(productFile)
+
+        // const buscarProd = idProd.find(p => p.id === id)
+
+        // if(!buscarProd){
+        //     throw new Error("NO SE ENCONTRO EL PRODUCTO EN LA LISTA")
+        // }
+        // return buscarProd
     }
 
     async updateProduct(id, data) {
@@ -144,7 +129,7 @@ class ProductManager {
         let prods = JSON.parse(productFile)
 
         const buscarProd = prods.findIndex(p => p.id === id)
-        prods.splice(buscarProd, 1, {id, ...data})
+        prods.splice(buscarProd, 1, { id, ...data })
 
         await fs.writeFile(this.path, JSON.stringify(prods, null, 2))
 
@@ -157,10 +142,10 @@ class ProductManager {
 
         const buscarProd = prods.find(p => p.id === id)
 
-        if(!buscarProd){
+        if (!buscarProd) {
             throw new Error("EL ID NO EXISTE")
         }
-        
+
         const deletedProd = prods.filter(p => p.id !== id)
 
         await fs.writeFile(this.path, JSON.stringify(deletedProd, null, 2))
@@ -169,15 +154,27 @@ class ProductManager {
     }
 }
 
+
+
 const manager = new ProductManager()
 
-app.get("/", (req, res) => {
-    const productos = req.query.productos;
-    return manager.getProduct()
+app.use(express.urlencoded({ extended: true }))
+
+app.get("/products", async (req, res) => {
+    const limit = +req.query.limit
+    console.log(limit)
+    const prod = await manager.getProduct(limit)
+    res.send(prod)
 })
 
-app.listen(8081, () => {
-    console.log("El servidor esta escuchando en el puerto 8083")
+app.get("/products/:prodId", async (req, res) => {
+    const prodId = +req.params.prodId
+    const productoId = await manager.getProductById(prodId)
+    res.send(productoId)
+})
+
+app.listen(8080, () => {
+    console.log("El servidor esta escuchando en el puerto 8080")
 })
 
 
